@@ -24,10 +24,10 @@ test('plain relay', function (t) {
   function init () {
     togo = 2
     a = Relay.createClient(relayAddr)
-    a.bind(basePort++, onlistening)
+    a.bind(basePort++, '127.0.0.1', onlistening)
 
     b = Relay.createClient(relayAddr)
-    b.bind(basePort++, onlistening)
+    b.bind(basePort++, '127.0.0.1', onlistening)
   }
 
   function onlistening () {
@@ -57,8 +57,8 @@ test('plain relay', function (t) {
       var other = s === a ? b : a
       s.send(msg, 0, msg.length, other.address().port, '127.0.0.1')
       s.on('message', function (data, rinfo) {
-        t.equal(rinfo.address, relayAddr.address)
-        t.equal(rinfo.port, relayAddr.port)
+        t.equal(rinfo.address, other.address().address)
+        t.equal(rinfo.port, other.address().port)
         t.deepEqual(data, msg)
         die()
       })

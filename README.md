@@ -48,3 +48,7 @@ function start () {
   }
 }
 ```
+
+### Todo
+
+encode fwd'd messages to make them more compact (e.g. right now 'FWD:' and ip:port are unencoded)
