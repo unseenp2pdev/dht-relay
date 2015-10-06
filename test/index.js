@@ -1,7 +1,19 @@
 // require('sock-plex')
+var crypto = require('crypto')
 var test = require('tape')
 var Relay = require('../relay')
 var basePort = 12345
+
+test('encode, decode', function (t) {
+  var msg = new Buffer(crypto.randomBytes(100))
+  var to = { address: '127.0.0.1', port: 10000 }
+  var encoded = Relay.encodePacket(msg, to)
+  var decoded = Relay.decodePacket(encoded)
+  t.deepEqual(decoded.data, msg)
+  t.equal(decoded.address, to.address)
+  t.equal(decoded.port, to.port)
+  t.end()
+})
 
 test('plain relay', function (t) {
   // create relay server

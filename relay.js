@@ -1,12 +1,16 @@
 var dgram = require('dgram')
 var EventEmitter = require('events').EventEmitter
+var extend = require('xtend')
 var reemit = require('re-emitter')
 var fwdRegex = /^FWD:([^:]+):(\d+):(.*)$/
 var noop = function () {}
+var MAGIC = 53243
 
 module.exports = {
   createClient: createClient,
-  createServer: createServer
+  createServer: createServer,
+  encodePacket: encodePacket,
+  decodePacket: decodePacket
 }
 
 function createServer (port) {
@@ -34,10 +38,9 @@ function createClient (socket, proxy) {
   }
 
   socket = socket || dgram.createSocket('udp4')
-
   var emitter = new EventEmitter()
   emitter.send = function (data, offset, len, port, address, callback) {
-    if (offset) throw new Error('not supported')
+    if (offset || len !== data.length) throw new Error('not supported')
 
     data = encodePacket(data, {
       address: address,
@@ -47,14 +50,25 @@ function createClient (socket, proxy) {
     socket.send(data, 0, data.length, proxy.port, proxy.address, callback || noop)
   }
 
+  // hack
+  var filters = []
+  if (socket.filterMessages) {
+    emitter.filterMessages = filters.push.bind(filters)
+  }
+
   socket.on('message', function (data, rinfo) {
     if (rinfo.address !== proxy.address || rinfo.port !== proxy.port) return
 
     var packet = decodePacket(data)
-    emitter.emit('message', packet.data, {
+    data = packet.data
+    if (!filters.every(function (f) { return f(data, rinfo) })) {
+      return
+    }
+
+    emitter.emit('message', data, extend(rinfo, {
       address: packet.address,
       port: packet.port
-    })
+    }))
   })
 
   ;['bind', 'address', 'close'].forEach(function (method) {
@@ -66,19 +80,30 @@ function createClient (socket, proxy) {
 }
 
 function encodePacket (data, rinfo) {
-  return Buffer.concat([
-    new Buffer('FWD:' + rinfo.address + ':' + rinfo.port + ':'),
-    data
-  ])
+  var buf = new Buffer(data.length + 8)
+  buf.writeUInt16BE(MAGIC, 0)
+  rinfo.address.split('.')
+    .map(Number)
+    .forEach(function (n, i) {
+      buf.writeUInt8(n, i + 2)
+    })
+
+  buf.writeUInt16BE(rinfo.port, 6)
+  data.copy(buf, 8)
+  return buf
 }
 
 function decodePacket (buf) {
-  var match = fwdRegex.exec(buf)
-  if (match) {
-    return {
-      address: match[1],
-      port: Number(match[2]),
-      data: new Buffer(match[3])
-    }
+  if (buf.readUInt16BE(0) !== MAGIC) return
+
+  var addr = []
+  for (var i = 0; i < 4; i++) {
+    addr.push(buf.readUInt8(i + 2))
+  }
+
+  return {
+    address: addr.join('.'),
+    port: buf.readUInt16BE(6),
+    data: buf.slice(8)
   }
 }
