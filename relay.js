@@ -60,6 +60,8 @@ function createClient (socket, proxy) {
     if (rinfo.address !== proxy.address || rinfo.port !== proxy.port) return
 
     var packet = decodePacket(data)
+    if (!packet) return
+
     data = packet.data
     if (!filters.every(function (f) { return f(data, rinfo) })) {
       return
