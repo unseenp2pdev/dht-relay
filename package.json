@@ -1,0 +1,27 @@
+{
+  "name": "dht-relay",
+  "version": "1.0.0",
+  "description": "bittorrent dht node that also functions as a udp relay, for getting around symmetric NATs",
+  "main": "./index.js",
+  "bin": "./cmd.js",
+  "scripts": {
+    "test": "node test"
+  },
+  "keywords": [
+    "nat",
+    "dht",
+    "relay",
+    "proxy",
+    "udp"
+  ],
+  "author": "Mark Vayngrib <mark.vayngrib@lablz.com> (http://github.com/mvayngrib)",
+  "license": "ISC",
+  "dependencies": {
+    "bittorrent-dht": "tradle/bittorrent-dht",
+    "minimist": "^1.2.0",
+    "sock-plex": "^1.0.2"
+  },
+  "devDependencies": {
+    "tape": "^4.2.1"
+  }
+}
