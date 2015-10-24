@@ -2,12 +2,14 @@
 require('sock-plex')
 var DHT = require('bittorrent-dht')
 var Relay = require('./relay')
+var DHT_MSG_REGEX = /^d1:.?d2:id20:/
+var DHT_ERR_REGEX = /^d1:eli20/
 
 module.exports = function createServer (port) {
   var relay = Relay.createServer(port)
   relay.filterMessages(function (msg, rinfo) {
     // console.log(isInDHT(rinfo))
-    return !/^d1:.?d2:id20:/.test(msg)
+    return !isDHTMessage(msg)
   })
 
   var dht = new DHT({
@@ -16,7 +18,7 @@ module.exports = function createServer (port) {
 
   dht.listen(port)
   dht.socket.filterMessages(function (msg) {
-    return /^d1:.?d2:id20:/.test(msg)
+    return isDHTMessage(msg)
   })
 
   return relay
@@ -26,4 +28,8 @@ module.exports = function createServer (port) {
       return n.addr === rinfo.address + ':' + rinfo.port
     })
   }
+}
+
+function isDHTMessage (msg) {
+  return DHT_MSG_REGEX.test(msg) || DHT_ERR_REGEX.test(msg)
 }
