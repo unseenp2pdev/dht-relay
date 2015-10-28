@@ -20,6 +20,7 @@
     "bittorrent-dht": "tradle/bittorrent-dht",
     "minimist": "^1.2.0",
     "re-emitter": "^1.1.1",
+    "simple-get": "^1.4.3",
     "sock-plex": "^1.0.2",
     "xtend": "^4.0.0"
   },
