@@ -31,8 +31,9 @@ function createServer (port) {
   return proxy
 }
 
-function createClient (socket, proxy) {
-  if (!proxy) {
+function createClient (socket, proxy, dontProxyLocal) {
+  if (typeof proxy !== 'object') {
+    dontProxyLocal = proxy
     proxy = socket
     socket = null
   }
@@ -41,6 +42,11 @@ function createClient (socket, proxy) {
   var emitter = new EventEmitter()
   emitter.send = function (data, offset, len, port, address, callback) {
     if (offset || len !== data.length) throw new Error('not supported')
+
+    if (dontProxyLocal && address === '127.0.0.1') {
+      // for local addresses, don't use a relay
+      return socket.send.apply(socket, arguments)
+    }
 
     data = encodePacket(data, {
       address: address,
@@ -57,20 +63,31 @@ function createClient (socket, proxy) {
   }
 
   socket.on('message', function (data, rinfo) {
-    if (rinfo.address !== proxy.address || rinfo.port !== proxy.port) return
+    if (!dontProxyLocal) {
+      if (rinfo.address !== proxy.address || rinfo.port !== proxy.port) return
+    }
 
-    var packet = decodePacket(data)
-    if (!packet) return
+    var isLocal = dontProxyLocal && rinfo.address === '127.0.0.1'
+    var packet
+    if (!isLocal) {
+      packet = decodePacket(data)
+      if (!packet) return
 
-    data = packet.data
+      data = packet.data
+    }
+
     if (!filters.every(function (f) { return f(data, rinfo) })) {
       return
     }
 
-    emitter.emit('message', data, extend(rinfo, {
-      address: packet.address,
-      port: packet.port
-    }))
+    if (!isLocal) {
+      rinfo = extend(rinfo, {
+        address: packet.address,
+        port: packet.port
+      })
+    }
+
+    emitter.emit('message', data, rinfo)
   })
 
   ;['bind', 'address', 'close'].forEach(function (method) {

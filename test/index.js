@@ -77,3 +77,49 @@ test('plain relay', function (t) {
     })
   }
 })
+
+test('don\'t use proxy for local destination addresses', function (t) {
+  var relayAddr = {
+    port: basePort++,
+    address: '127.0.0.1'
+  }
+
+  var a, b
+  var togo
+  var msg = new Buffer('hey')
+  var server = Relay.createServer(relayAddr.port)
+  server.on('listening', init)
+  server.on('message', t.fail)
+
+  function init () {
+    togo = 2
+    a = Relay.createClient(relayAddr, true)
+    a.bind(basePort++, '127.0.0.1', onlistening)
+
+    b = Relay.createClient(relayAddr, true)
+    b.bind(basePort++, '127.0.0.1', onlistening)
+  }
+
+  function onlistening () {
+    if (--togo === 0) {
+      talk()
+    }
+  }
+
+  function talk () {
+    togo = 2
+    ;[a, b].forEach(function (s) {
+      var other = s === a ? b : a
+      s.send(msg, 0, msg.length, other.address().port, '127.0.0.1')
+      s.on('message', function (data, rinfo) {
+        t.equal(rinfo.address, other.address().address)
+        t.equal(rinfo.port, other.address().port)
+        t.deepEqual(data, msg)
+        a.close()
+        b.close()
+        server.close()
+        t.end()
+      })
+    })
+  }
+})
