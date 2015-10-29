@@ -74,17 +74,14 @@ function createClient (socket, proxy, dontProxyLocal) {
       if (!packet) return
 
       data = packet.data
-    }
-
-    if (!filters.every(function (f) { return f(data, rinfo) })) {
-      return
-    }
-
-    if (!isLocal) {
       rinfo = extend(rinfo, {
         address: packet.address,
         port: packet.port
       })
+    }
+
+    if (!filters.every(function (f) { return f(data, rinfo) })) {
+      return
     }
 
     emitter.emit('message', data, rinfo)
