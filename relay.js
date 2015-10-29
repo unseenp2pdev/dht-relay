@@ -74,10 +74,10 @@ function createClient (socket, proxy, dontProxyLocal) {
       if (!packet) return
 
       data = packet.data
-      rinfo = extend(rinfo, {
+      rinfo = {
         address: packet.address,
         port: packet.port
-      })
+      }
     }
 
     if (!filters.every(function (f) { return f(data, rinfo) })) {
