@@ -1,6 +1,6 @@
 
 require('sock-plex')
-var DHT = require('bittorrent-dht')
+var DHT = require('@tradle/bittorrent-dht')
 // var publicAddress = require('bittorrent-dht/lib/public-address')
 var Relay = require('./relay')
 var DHT_MSG_REGEX = /^d1:.?d2:id20:/

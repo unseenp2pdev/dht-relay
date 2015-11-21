@@ -1,5 +1,5 @@
 {
-  "name": "dht-relay",
+  "name": "@tradle/dht-relay",
   "version": "1.0.0",
   "description": "bittorrent dht node that also functions as a udp relay, for getting around symmetric NATs",
   "main": "./index.js",
@@ -17,7 +17,7 @@
   "author": "Mark Vayngrib <mark.vayngrib@lablz.com> (http://github.com/mvayngrib)",
   "license": "ISC",
   "dependencies": {
-    "bittorrent-dht": "tradle/bittorrent-dht",
+    "@tradle/bittorrent-dht": "^3.2.1",
     "minimist": "^1.2.0",
     "re-emitter": "^1.1.1",
     "simple-get": "^1.4.3",
